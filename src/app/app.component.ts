@@ -10,4 +10,8 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'task-manager';
+
+  soma(num1: number, num2: number): number {
+    return num1 + num2;
+  }
 }
