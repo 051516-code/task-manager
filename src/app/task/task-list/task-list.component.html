@@ -1,0 +1,64 @@
+<h2>Task List</h2>
+
+<!-- Mensaje cuando no hay tareas -->
+<div *ngIf="tasks.length === 0" class="no-tasks">
+  <p>No hay tareas aún.</p>
+</div>
+
+
+<table *ngIf="tasks.length > 0">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Description</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let task of tasks">
+      <td>{{ task.title }}</td>
+      <td>{{ task.description }}</td>
+      <td>{{ task.status }}</td>
+      <td>
+        <button class="delete-btn" (click)="deleteTask(task.id)">Delete</button>
+        <button class="edit-btn" (click)="editTask(task.id)">Edit</button>
+        <button class="modal-btn" (click)="showTaskDetails(task)">View Details</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!-- Modal -->
+<div class="modal" *ngIf="selectedTask">
+  <div class="modal-content">
+    <span class="close" (click)="closeModal()">&times;</span>
+    <h3 class="modal-title">Task Details</h3>
+    
+    <div class="task-detail">
+      <div class="task-info">
+        <label for="title">Title:</label>
+        <span>{{ selectedTask.title }}</span>
+      </div>
+      <div class="task-info">
+        <label for="description">Description:</label>
+        <span>{{ selectedTask.description }}</span>
+      </div>
+      <div class="task-info">
+        <label for="status">Status:</label>
+        <span>{{ selectedTask.status }}</span>
+      </div>
+      <div class="task-info">
+        <label for="createdAt">Created At:</label>
+        <span>{{ selectedTask.createdAt | date: 'medium'}}</span>
+      </div>
+      <div class="task-info">
+        <label for="updatedAt">Updated At:</label>
+        <span>{{ selectedTask.updatedAt | date: 'medium' }}</span>
+      </div>
+    </div>
+
+    <button class="close-btn" (click)="closeModal()">Close</button>
+  </div>
+</div>

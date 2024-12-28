@@ -1,0 +1,42 @@
+<h2>Create New Task</h2>
+<form (ngSubmit)="createTask()">
+  <div class="form-group">
+    <label for="title">Title</label>
+    <input
+      type="text"
+      id="title"
+      [(ngModel)]="newTask.title"
+      name="title"
+      required
+      placeholder="Enter task title"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea
+      id="description"
+      [(ngModel)]="newTask.description"
+      name="description"
+      required
+      placeholder="Enter task description"
+    ></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="status">Status</label>
+    <select
+      id="status"
+      [(ngModel)]="newTask.status"
+      name="status"
+    >
+      <option value="pending">Pending</option>
+      <option value="in-progress">In Progress</option>
+      <option value="completed">Completed</option>
+    </select>
+  </div>
+
+  <button type="submit" [disabled]="!newTask.title || !newTask.description">
+    Create Task
+  </button>
+</form>

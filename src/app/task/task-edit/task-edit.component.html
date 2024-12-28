@@ -1,0 +1,39 @@
+<h2>Edit Task</h2>
+<form (ngSubmit)="saveTask()">
+  <div class="form-group">
+    <label for="title">Title</label>
+    <input
+      type="text"
+      id="title"
+      [(ngModel)]="task!.title"
+      name="title"
+      required
+      placeholder="Enter task title"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea
+      id="description"
+      [(ngModel)]="task!.description"
+      name="description"
+      required
+      placeholder="Enter task description"
+    ></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="status">Status</label>
+    <select id="status" [(ngModel)]="task!.status" name="status">
+      <option value="pending">Pending</option>
+      <option value="in-progress">In Progress</option>
+      <option value="completed">Completed</option>
+    </select>
+  </div>
+
+  <button type="submit" [disabled]="!task?.title || !task?.description">
+    Save Changes
+  </button>
+  <button type="button" class="edit" (click)="cancelEdit()">Cancel</button>
+</form>
