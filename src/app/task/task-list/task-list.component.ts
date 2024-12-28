@@ -23,7 +23,7 @@ export class TaskListComponent implements OnInit {
   ngOnInit(): void {
     this.taskService.getTasks().subscribe(
       (data) => {
-        this.tasks = data;
+        this.tasks = data.reverse();
       },
       (error) =>{
         console.log('error al obtener las task')
@@ -53,9 +53,6 @@ export class TaskListComponent implements OnInit {
     );
   }
   
-  
-  
-
   editTask(id: number): void {
     this.router.navigate([`/edit/${id}`]);
   }

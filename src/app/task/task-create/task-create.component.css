@@ -35,3 +35,7 @@ h2 {
     background-color: #ccc;
   }
   
+  .cancel {
+    margin-left: 10px;
+    background-color: red;
+  }
