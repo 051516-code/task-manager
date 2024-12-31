@@ -3,6 +3,7 @@ import { TaskService } from '../services/task.service';
 import { Router } from '@angular/router';
 import { Task } from '../models/task.interface';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-task-create',
@@ -29,24 +30,45 @@ export class TaskCreateComponent {
 
 
   //TODO> Create task 
-  createTask(): void {
+  async createTask(): Promise<void> {
     // Validación de campos
     if (!this.newTask.title || !this.newTask.description) {
-      console.log('Both title and description are required.');
+      Swal.fire('¡Error al Crear la Tarea!', 'No se pudo Crear la tarea.', 'error');
       return;
     }
+
+      const result = await Swal.fire({
+          title: '¿Estás seguro de Crear esta tarea?',
+          text: '¡Se creara una nueva Tarea!',
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Sí, editar',
+          cancelButtonText: 'Cancelar',
+        });
+
+        if(result.isConfirmed){
+          try {
+
+           this.taskService.addTask(this.newTask).subscribe(
+              () => {
+                 Swal.fire('Creada!', 'La tarea ha sido Creada con éxito.', 'success');
+                // redigie a la lista 
+                this.router.navigate(['/'])
+              
+              },
+              (error) => {
+               Swal.fire('¡Error al Crear la Tarea!', 'No se pudo Crear la tarea.', 'error');
+              }
+            );
+
+          }catch ( error ) {
+            Swal.fire('¡Error al Crear la Tarea!', 'No se pudo Crear la tarea.', 'error');
+          }
+        }
   
-    this.taskService.addTask(this.newTask).subscribe(
-      () => {
-        console.log('Task created successfully');
-        // redigie a la lista 
-        this.router.navigate(['/'])
-      
-      },
-      (error) => {
-        console.error('Failed to create task', error);
-      }
-    );
+   
   }
 
   cancelCreate(): void {

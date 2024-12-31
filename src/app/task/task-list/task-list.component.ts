@@ -3,6 +3,7 @@ import { Task } from '../models/task.interface';
 import { TaskService } from '../services/task.service';
 import { CommonModule } from '@angular/common'; 
 import { Router } from '@angular/router';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-task-list',
@@ -27,31 +28,50 @@ export class TaskListComponent implements OnInit {
       },
       (error) =>{
         console.log('error al obtener las task')
-      },
-      () => {
-        // console.log('completado')
       }
 
     )
   }
 
-  deleteTask(id: number): void {
-    // Llamar al servicio para eliminar la tarea
-    this.taskService.deleteTask(id).subscribe(
-      () => {
-        console.log('Tarea eliminada con éxito');
-        // Aquí podrías actualizar el estado local de las tareas si es necesario
-        this.tasks = this.tasks.filter(task => task.id !== id);
-      },
-      (error) => {
-        console.error('Error al eliminar la tarea', error);
-        // Aquí podrías manejar el error, por ejemplo, mostrando un mensaje al usuario
-      },
-      () => {
-        // console.log('Eliminación completada')
+ async deleteTask(id: number | null ) {
+
+    if (id === null) {
+      console.error('Task ID is null');
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Estás seguro de esta acción?',
+      text: '¡No podrás revertir esta acción!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Llamar al servicio para eliminar la tarea
+        this.taskService.deleteTask(id).subscribe(
+          () => {
+            // Mostrar notificación de éxito
+            Swal.fire('¡Eliminada!', 'La tarea ha sido eliminada con éxito.', 'success');
+            // Actualizar la lista local de tareas
+            this.tasks = this.tasks.filter((task) => task.id !== id);
+          },
+          (error) => {
+            // Mostrar notificación de error
+            Swal.fire('¡Error al Eliminar!', 'La tarea no se ha podido eliminar con éxito.', 'error');
+          },
+          () => {
+            // Eliminación completada (callback final)
+            console.log('Eliminación completada');
+          }
+        );
       }
-    );
+    });
   }
+  
   
   editTask(id: number): void {
     this.router.navigate([`/edit/${id}`]);

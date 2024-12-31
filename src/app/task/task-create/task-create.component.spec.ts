@@ -4,6 +4,7 @@ import { TaskService } from '../services/task.service';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 
 // Servicio simulado
 class MockTaskService {
@@ -18,8 +19,8 @@ describe('TaskCreateComponent', () => {
   let taskService: TaskService;
   let router: Router;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [TaskCreateComponent, FormsModule], // Configuración para el componente standalone
       providers: [
         { provide: TaskService, useClass: MockTaskService },
@@ -38,18 +39,20 @@ describe('TaskCreateComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should not call addTask if title or description is missing', () => {
+  it('should not call addTask if title or description is missing', async () => {
     spyOn(taskService, 'addTask').and.callThrough();
-
     component.newTask.title = '';
     component.newTask.description = '';
-    component.createTask();
+
+    await component.createTask();
 
     expect(taskService.addTask).not.toHaveBeenCalled(); // Verifica que el servicio no se llamó
   });
 
-  it('should call addTask and navigate on success', () => {
-    spyOn(taskService, 'addTask').and.callThrough(); // Espía el servicio
+  it('should call addTask and navigate on success', async () => {
+    spyOn(taskService, 'addTask').and.returnValue(of(undefined)); // Espía el servicio
+    spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any); // Simula la confirmación
+
     component.newTask = {
       id: 0,
       title: 'Test Task',
@@ -59,15 +62,15 @@ describe('TaskCreateComponent', () => {
       updatedAt: new Date(),
     };
 
-    component.createTask();
+    await component.createTask();
 
     expect(taskService.addTask).toHaveBeenCalled(); // Verifica que el servicio fue llamado
     expect(router.navigate).toHaveBeenCalledWith(['/']); // Verifica la navegación
   });
 
-  it('should log error on service failure', () => {
+  it('should show error alert on service failure', async () => {
     spyOn(taskService, 'addTask').and.returnValue(throwError(() => new Error('Service error')));
-    spyOn(console, 'error'); // Espía el log de errores
+    const swalSpy = spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any); // Simula confirmación
 
     component.newTask = {
       id: 0,
@@ -78,8 +81,9 @@ describe('TaskCreateComponent', () => {
       updatedAt: new Date(),
     };
 
-    component.createTask();
+    await component.createTask();
 
-    expect(console.error).toHaveBeenCalledWith('Failed to create task', jasmine.any(Error));
+    expect(taskService.addTask).toHaveBeenCalled(); // Verifica que el servicio fue llamado
+    expect(swalSpy).toHaveBeenCalledWith('¡Error al Crear la Tarea!', 'No se pudo Crear la tarea.', 'error');
   });
 });

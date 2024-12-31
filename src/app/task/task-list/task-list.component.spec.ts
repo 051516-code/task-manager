@@ -1,111 +1,91 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TaskListComponent } from './task-list.component';
 import { TaskService } from '../services/task.service';
-import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { Task } from '../models/task.interface';
-import { CommonModule } from '@angular/common';
-
-// Mock de TaskService
-class MockTaskService {
-  private tasks: Task[] = [
-    { id: 1, title: 'Task 1', description: 'Description 1', status: 'pending', createdAt: new Date(), updatedAt: new Date() },
-    { id: 2, title: 'Task 2', description: 'Description 2', status: 'pending', createdAt: new Date(), updatedAt: new Date() },
-  ];
-
-  getTasks() {
-    return of(this.tasks);  // Devuelve las tareas actuales
-  }
-
-  deleteTask(id: number) {
-    this.tasks = this.tasks.filter(task => task.id !== id);  // Elimina la tarea con el id proporcionado
-    return of();  // Retorna un Observable vacío después de la eliminación
-  }
-}
-
-class MockRouter {
-  navigate(path: string[]) {
-    return true;  // Simula la navegación sin hacer nada realmente
-  }
-}
+import Swal from 'sweetalert2';
 
 describe('TaskListComponent', () => {
   let component: TaskListComponent;
   let fixture: ComponentFixture<TaskListComponent>;
-  let taskService: TaskService;
-  let router: Router;
+  let mockTaskService: jasmine.SpyObj<TaskService>;
+
+  const mockTasks: Task[] = [
+    {
+      id: 1,
+      title: 'Task 1',
+      description: 'Description of Task 1',
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 2,
+      title: 'Task 2',
+      description: 'Description of Task 2',
+      status: 'completed',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [TaskListComponent, CommonModule],  // Importamos el componente y módulos necesarios
-      providers: [
-        { provide: TaskService, useClass: MockTaskService },
-        { provide: Router, useClass: MockRouter }
-      ]
-    })
-    .compileComponents();
-  });
+    mockTaskService = jasmine.createSpyObj('TaskService', ['getTasks', 'deleteTask']);
 
-  beforeEach(() => {
+    await TestBed.configureTestingModule({
+      imports: [TaskListComponent], // Cambiado de `declarations` a `imports`
+      providers: [{ provide: TaskService, useValue: mockTaskService }],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(TaskListComponent);
     component = fixture.componentInstance;
-    taskService = TestBed.inject(TaskService);
-    router = TestBed.inject(Router);
-
-    // Inicializar el componente
-    fixture.detectChanges();
   });
 
-  it('should update the task list when a task is deleted', fakeAsync(() => {
-    spyOn(taskService, 'deleteTask').and.callThrough();
-    spyOn(taskService, 'getTasks').and.callThrough();
+  it('should fetch tasks on initialization', () => {
+    mockTaskService.getTasks.and.returnValue(of(mockTasks));
 
-    // Primero cargamos las tareas
     component.ngOnInit();
-    expect(component.tasks.length).toBe(2);  // Verifica que inicialmente hay 2 tareas
 
-    // Eliminar una tarea
-    component.deleteTask(1);
-    
-    // Usamos tick() para esperar a que se completen las operaciones asincrónicas
-    tick(); 
-    
-    // Aseguramos que las tareas se actualizan después de la eliminación
-    taskService.getTasks().subscribe(tasks => {
-      component.tasks = tasks;
-    });
+    expect(mockTaskService.getTasks).toHaveBeenCalled();
+    expect(component.tasks).toEqual(mockTasks.reverse());
+  });
 
-    fixture.detectChanges();  // Asegúrate de que la vista se actualice
+  it('should delete a task and update the task list', async () => {
+    const deleteTaskSpy = mockTaskService.deleteTask.and.returnValue(of(void 0));
+    component.tasks = [...mockTasks];
+  
+    // Simula el comportamiento de SweetAlert2 confirmando la acción
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+  
+    // Llama al método que elimina la tarea
+    await component.deleteTask(1); // Asegúrate de usar `await` si deleteTask es asíncrono
+  
+    expect(deleteTaskSpy).toHaveBeenCalledWith(1); // Verifica que el método del servicio sea llamado
+    expect(component.tasks.length).toBe(1); // Verifica que la tarea fue eliminada
+    expect(component.tasks[0].id).toBe(2); // Verifica que queda la tarea correcta
+  });
+  
 
-    // Verifica que la tarea se haya eliminado
-    expect(taskService.deleteTask).toHaveBeenCalledWith(1);
-    expect(component.tasks.length).toBe(1);  // Ahora debería quedar solo 1 tarea
-  }));
+  it('should set selectedTask when showTaskDetails is called', () => {
+    const task: Task = {
+      id: 1,
+      title: 'Task 1',
+      description: 'Description of Task 1',
+      status: 'in-progress',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-  it('should handle empty task list after deletion', fakeAsync(() => {
-    spyOn(taskService, 'deleteTask').and.callThrough();
-    spyOn(taskService, 'getTasks').and.callThrough();
+    component.showTaskDetails(task);
 
-    // Primero, cargamos las tareas
-    component.ngOnInit();
-    expect(component.tasks.length).toBe(2);  // Verifica que inicialmente hay 2 tareas
+    expect(component.selectedTask).toEqual(task);
+  });
 
-    // Eliminar todas las tareas
-    component.deleteTask(1); // Elimina la tarea 1
-    component.deleteTask(2); // Elimina la tarea 2
-    
-    tick();  // Asegurarse de que la operación asincrónica se complete
+  it('should clear selectedTask when closeModal is called', () => {
+    component.selectedTask = mockTasks[0];
 
-    // Aseguramos que las tareas se actualizan después de la eliminación
-    taskService.getTasks().subscribe(tasks => {
-      component.tasks = tasks;
-    });
+    component.closeModal();
 
-    fixture.detectChanges();  // Asegúrate de que la vista se actualice
-
-    // Verifica que la lista de tareas esté vacía
-    expect(taskService.deleteTask).toHaveBeenCalledWith(1);
-    expect(taskService.deleteTask).toHaveBeenCalledWith(2);
-    expect(component.tasks.length).toBe(0);  // La lista debería estar vacía
-  }));
+    expect(component.selectedTask).toBeNull();
+  });
 });
